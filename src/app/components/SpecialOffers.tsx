@@ -30,7 +30,7 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/offers");
+      const res = await fetch("https://book-store1-h2ux.onrender.com/api/offers");
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) throw new Error(data?.error || "Не вдалося завантажити набори");

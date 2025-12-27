@@ -128,7 +128,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (!user) return;
 
     const token = await getIdToken();
-    const res = await fetch("/api/orders", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/orders", {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -155,7 +155,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (!user) return;
 
     const token = await getIdToken();
-    const res = await fetch("/api/cart", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/cart", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -169,7 +169,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (!user) return;
 
     const token = await getIdToken();
-    const res = await fetch("/api/reading-list", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/reading-list", {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -203,7 +203,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     (async () => {
       try {
         setBooksLoading(true);
-        const res = await fetch("/api/books");
+        const res = await fetch("https://book-store1-h2ux.onrender.com/api/books");
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || "Не вдалося завантажити книги");
         if (!cancelled) setBooks(Array.isArray(data?.books) ? data.books : []);
@@ -226,7 +226,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     (async () => {
       try {
         setOffersLoading(true);
-        const res = await fetch("/api/offers");
+        const res = await fetch("https://book-store1-h2ux.onrender.com/api/offers");
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || "Не вдалося завантажити набори");
         if (!cancelled) setOffers(Array.isArray(data?.offers) ? data.offers : []);
@@ -281,7 +281,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (guestCart.length > 0) {
         try {
           const token = await fbUser.getIdToken();
-          await fetch("/api/cart", {
+          await fetch("https://book-store1-h2ux.onrender.com/api/cart", {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -369,7 +369,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     const token = await getIdToken();
-    const res = await fetch("/api/cart/add", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/cart/add", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -398,7 +398,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     const token = await getIdToken();
-    const res = await fetch("/api/cart", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/cart", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -422,7 +422,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     const token = await getIdToken();
-    const res = await fetch(`/api/cart/item/${bookId}`, {
+    const res = await fetch(`https://book-store1-h2ux.onrender.com/api/cart/item/${bookId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -445,7 +445,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     const token = await getIdToken();
-    const res = await fetch("/api/cart/item", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/cart/item", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -467,7 +467,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     const token = await getIdToken();
-    const res = await fetch("/api/cart", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/cart", {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -483,7 +483,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (readingList.includes(bookId)) return;
 
     const token = await getIdToken();
-    const res = await fetch("/api/reading-list", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/reading-list", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -502,7 +502,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (!user) return;
 
     const token = await getIdToken();
-    const res = await fetch(`/api/reading-list/${bookId}`, {
+    const res = await fetch(`https://book-store1-h2ux.onrender.com/api/reading-list/${bookId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -517,7 +517,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (!user) return;
 
     const token = await getIdToken();
-    const res = await fetch("/api/orders", {
+    const res = await fetch("https://book-store1-h2ux.onrender.com/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -545,7 +545,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (!user) throw new Error("Not authenticated");
 
     const token = await getIdToken();
-    const res = await fetch(`/api/books/${bookId}/reviews`, {
+    const res = await fetch(`https://book-store1-h2ux.onrender.com/api/books/${bookId}/reviews`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
