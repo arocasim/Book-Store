@@ -1,15 +1,24 @@
 import admin from "firebase-admin";
-import fs from "fs";
 
-const serviceAccount = JSON.parse(
-  fs.readFileSync(new URL("../serviceAccountKey.json", import.meta.url), "utf-8")
-);
+function loadServiceAccount() {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!raw) throw new Error("Missing FIREBASE_SERVICE_ACCOUNT env var");
+
+  const json = JSON.parse(raw);
+
+  // якщо private_key прийшов з \n — робимо нормальні перенос рядків
+  if (json.private_key) {
+    json.private_key = json.private_key.replace(/\\n/g, "\n");
+  }
+
+  return json;
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(loadServiceAccount()),
   });
 }
 
-export const authAdmin = admin.auth();
 export const dbAdmin = admin.firestore();
+export const authAdmin = admin.auth();

@@ -9,7 +9,24 @@ import { readingListRouter } from "./routes/readingList.js";
 import { cartRouter } from "./routes/cart.js";
 
 const app = express();
-app.use(cors());
+
+const allowed = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // healthcheck / postman
+      if (allowed.length === 0) return cb(null, true); // якщо не вказано — пускає всіх (на тест)
+      if (allowed.includes(origin)) return cb(null, true);
+      return cb(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
@@ -23,4 +40,4 @@ app.use("/api/reading-list", requireAuth, readingListRouter());
 app.use("/api/cart", requireAuth, cartRouter());
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
