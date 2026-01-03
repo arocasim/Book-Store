@@ -14,7 +14,6 @@ const normalizeCart = (raw) => {
 export function cartRouter() {
   const router = Router();
 
-  // GET /api/cart -> поточний кошик юзера
   router.get("/", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -30,7 +29,6 @@ export function cartRouter() {
     }
   });
 
-  // PUT /api/cart -> замінити кошик повністю (body: { cart: [...] })
   router.put("/", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -44,7 +42,6 @@ export function cartRouter() {
     }
   });
 
-  // POST /api/cart/add -> +1 книга (body: { bookId })
   router.post("/add", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -73,7 +70,6 @@ export function cartRouter() {
     }
   });
 
-  // PATCH /api/cart/item -> виставити quantity (body: { bookId, quantity })
   router.patch("/item", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -106,7 +102,6 @@ export function cartRouter() {
     }
   });
 
-  // DELETE /api/cart/item/:bookId -> прибрати книгу
   router.delete("/item/:bookId", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -132,7 +127,6 @@ export function cartRouter() {
     }
   });
 
-  // DELETE /api/cart -> очистити кошик
   router.delete("/", async (req, res) => {
     try {
       const uid = req.user.uid;

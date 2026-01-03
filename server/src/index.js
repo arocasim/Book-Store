@@ -18,8 +18,8 @@ const allowed = (process.env.CORS_ORIGIN || "")
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true); // healthcheck / postman
-      if (allowed.length === 0) return cb(null, true); // якщо не вказано — пускає всіх (на тест)
+      if (!origin) return cb(null, true);
+      if (allowed.length === 0) return cb(null, true);
       if (allowed.includes(origin)) return cb(null, true);
       return cb(new Error("Not allowed by CORS"));
     },

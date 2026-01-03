@@ -4,7 +4,6 @@ import { dbAdmin } from "../firebaseAdmin.js";
 export function ordersRouter() {
   const router = Router();
 
-  // GET /api/orders
   router.get("/", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -26,7 +25,6 @@ export function ordersRouter() {
     }
   });
 
-  // POST /api/orders
   router.post("/", async (req, res) => {
     try {
       const uid = req.user.uid;

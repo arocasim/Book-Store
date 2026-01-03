@@ -193,7 +193,7 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
                 <span>{rawTotal} ₴</span>
               </div>
 
-              {/* ✅ якщо застосувалися набори — покажемо економію */}
+              {}
               {bundleCalc.savedTotal > 0 && (
                 <div className="cart-summary-row" style={{ color: "var(--success-color)" }}>
                   <span>Знижка (набори):</span>

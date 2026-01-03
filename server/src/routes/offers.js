@@ -4,7 +4,6 @@ import { dbAdmin } from "../firebaseAdmin.js";
 export function offersRouter() {
   const router = Router();
 
-  // GET /api/offers (публічний)
   router.get("/", async (req, res) => {
     try {
       const snap = await dbAdmin

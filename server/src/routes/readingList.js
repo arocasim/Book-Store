@@ -4,7 +4,6 @@ import { dbAdmin } from "../firebaseAdmin.js";
 export function readingListRouter() {
   const router = Router();
 
-  // GET /api/reading-list  -> список (масив bookId)
   router.get("/", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -20,7 +19,6 @@ export function readingListRouter() {
     }
   });
 
-  // POST /api/reading-list  body: { bookId }
   router.post("/", async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -49,7 +47,6 @@ export function readingListRouter() {
     }
   });
 
-  // DELETE /api/reading-list/:bookId
   router.delete("/:bookId", async (req, res) => {
     try {
       const uid = req.user.uid;

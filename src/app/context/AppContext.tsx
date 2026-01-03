@@ -359,6 +359,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const addToCart = async (bookId: number) => {
+      if (!user) throw new Error("Спочатку увійдіть або зареєструйтесь, щоб додавати в кошик.");
     if (!user) {
       const existing = cart.find((i) => i.bookId === bookId);
       const next = existing
@@ -385,6 +386,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const addBundleToCart = async (bookIds: number[]) => {
+      if (!user) throw new Error("Спочатку увійдіть або зареєструйтесь, щоб додавати в кошик.");
     const next = cart.map((x) => ({ ...x }));
     for (const bookId of bookIds) {
       const existing = next.find((i) => i.bookId === bookId);
@@ -414,6 +416,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const removeFromCart = async (bookId: number) => {
+      if (!user) throw new Error("Спочатку увійдіть або зареєструйтесь, щоб додавати в кошик.");
     const next = cart.filter((i) => i.bookId !== bookId);
 
     if (!user) {

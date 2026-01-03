@@ -1,67 +1,77 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { Gift, ShoppingCart } from 'lucide-react'
-import { useAppContext } from '../context/AppContext'
-import type { Book } from '../types'
+import React, { useEffect, useMemo, useState } from "react";
+import { Gift, ShoppingCart } from "lucide-react";
+import { useAppContext } from "../context/AppContext";
+import type { Book } from "../types";
 
 interface SpecialOffer {
-  id: string
-  title: string
-  description: string
-  bookIds: number[]
-  originalPrice: number
-  discountedPrice: number
-  discount: number
-  active?: boolean
+  id: string;
+  title: string;
+  description: string;
+  bookIds: number[];
+  originalPrice: number;
+  discountedPrice: number;
+  discount: number;
+  active?: boolean;
 }
 
 interface SpecialOffersProps {
-  onNavigate: (page: string, bookId?: number) => void
+  onNavigate: (page: string, bookId?: number) => void;
 }
 
 export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
-  const { books, addBundleToCart } = useAppContext()
-  const [offers, setOffers] = useState<SpecialOffer[]>([])
-  const [loading, setLoading] = useState(true)
+  const { user, books, addBundleToCart } = useAppContext();
+
+  const [offers, setOffers] = useState<SpecialOffer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  (async () => {
-    try {
-      setLoading(true);
+    (async () => {
+      try {
+        setLoading(true);
 
-      const res = await fetch("https://book-store1-h2ux.onrender.com/api/offers");
-      const data = await res.json().catch(() => ({}));
+        const res = await fetch("https://book-store1-h2ux.onrender.com/api/offers");
+        const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) throw new Error(data?.error || "Не вдалося завантажити набори");
+        if (!res.ok) throw new Error(data?.error || "Не вдалося завантажити набори");
 
-      const loaded: SpecialOffer[] = Array.isArray(data?.offers) ? data.offers : [];
+        const loaded: SpecialOffer[] = Array.isArray(data?.offers) ? data.offers : [];
+        if (!cancelled) setOffers(loaded);
+      } catch (err) {
+        console.error("offers fetch error:", err);
+        if (!cancelled) setOffers([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
 
-      if (!cancelled) setOffers(loaded);
-    } catch (err) {
-      console.error("offers fetch error:", err);
-      if (!cancelled) setOffers([]);
-    } finally {
-      if (!cancelled) setLoading(false);
-    }
-  })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  return () => {
-    cancelled = true;
-  };
-}, []);
-
-
-  // ✅ щоб швидше шукати книги — зробимо мапу id -> book
   const booksById = useMemo(() => {
-    const map = new Map<number, Book>()
-    for (const b of books) map.set(Number((b as any).id), b)
-    return map
-  }, [books])
+    const map = new Map<number, Book>();
+    for (const b of books) map.set(Number((b as any).id), b);
+    return map;
+  }, [books]);
 
-  const handleAddBundle = (offer: SpecialOffer) => {
-    addBundleToCart(offer.bookIds)
-  }
+  const requireLogin = () => {
+    alert("Щоб додавати набори в кошик, спочатку увійдіть або зареєструйтесь.");
+    onNavigate("auth");
+  };
+
+  const handleAddBundle = async (offer: SpecialOffer) => {
+    if (!user) return requireLogin();
+
+    try {
+      await addBundleToCart(offer.bookIds);
+      onNavigate("cart");
+    } catch (err: any) {
+      alert(err?.message || "Не вдалося додати набір до кошика");
+    }
+  };
 
   if (loading) {
     return (
@@ -72,7 +82,7 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
         </div>
         <p style={{ opacity: 0.8 }}>Завантаження пропозицій…</p>
       </section>
-    )
+    );
   }
 
   if (offers.length === 0) {
@@ -84,7 +94,7 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
         </div>
         <p style={{ opacity: 0.8 }}>Наразі немає активних наборів.</p>
       </section>
-    )
+    );
   }
 
   return (
@@ -96,10 +106,11 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
 
       <div className="special-offers-grid">
         {offers.map((offer) => {
-          // ✅ без undefined
-          const offerBooks: Book[] = offer.bookIds
+          const offerBooks: Book[] = (offer.bookIds || [])
             .map((id) => booksById.get(id))
-            .filter((b): b is Book => Boolean(b))
+            .filter((b): b is Book => Boolean(b));
+
+          const savings = Math.max(0, Number(offer.originalPrice || 0) - Number(offer.discountedPrice || 0));
 
           return (
             <div key={offer.id} className="special-offer-card">
@@ -126,7 +137,9 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
                     <div
                       key={book.id}
                       className="special-offer-book-item"
-                      onClick={() => onNavigate('book', book.id)}
+                      onClick={() => onNavigate("book", book.id)}
+                      role="button"
+                      tabIndex={0}
                     >
                       <span className="book-number">{index + 1}.</span>
                       <span className="book-info">
@@ -142,25 +155,23 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
                     <span className="original-price">{offer.originalPrice} ₴</span>
                     <span className="price large">{offer.discountedPrice} ₴</span>
                   </div>
-                  <div className="savings">
-                    Економія: {offer.originalPrice - offer.discountedPrice} ₴
-                  </div>
+                  <div className="savings">Економія: {savings} ₴</div>
                 </div>
 
                 <button
                   className="btn btn-primary btn-large btn-full"
                   onClick={() => handleAddBundle(offer)}
                   disabled={offerBooks.length === 0}
-                  title={offerBooks.length === 0 ? 'Книги набору не знайдені' : ''}
+                  title={offerBooks.length === 0 ? "Книги набору не знайдені" : user ? "" : "Увійдіть, щоб додати набір"}
                 >
                   <ShoppingCart size={20} />
                   Додати набір до кошика
                 </button>
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </section>
-  )
-}
+  );
+};

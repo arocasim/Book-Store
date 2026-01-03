@@ -5,7 +5,6 @@ import { requireAuth } from "../middleware/requireAuth.js";
 export function booksRouter() {
   const router = Router();
 
-  // GET /api/books
   router.get("/", async (req, res) => {
     try {
       const snap = await dbAdmin.collection("books").orderBy("title", "asc").get();
@@ -22,7 +21,6 @@ export function booksRouter() {
     }
   });
 
-  // ✅ POST /api/books/:id/reviews  (тільки для залогінених)
   router.post("/:id/reviews", requireAuth, async (req, res) => {
     try {
       const uid = req.user.uid;
@@ -44,7 +42,7 @@ export function booksRouter() {
       const reviews = Array.isArray(book.reviews) ? book.reviews : [];
 
       const newReview = {
-        id: Date.now(), // щоб точно унікальний
+        id: Date.now(),
         userId: uid,
         userName,
         rating,
@@ -54,7 +52,6 @@ export function booksRouter() {
 
       const nextReviews = [...reviews, newReview];
 
-      // перерахунок середнього рейтингу
       const sum = nextReviews.reduce((s, r) => s + Number(r.rating || 0), 0);
       const nextRating = nextReviews.length ? sum / nextReviews.length : 0;
 

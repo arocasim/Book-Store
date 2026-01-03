@@ -1,6 +1,5 @@
 @import './tailwind.css';
 
-/* Global Styles */
 * {
   margin: 0;
   padding: 0;
@@ -19,7 +18,6 @@ body {
 
 }
 
-/* CSS Variables for theming */
 :root {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;

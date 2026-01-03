@@ -6,7 +6,6 @@ function loadServiceAccount() {
 
   const json = JSON.parse(raw);
 
-  // якщо private_key прийшов з \n — робимо нормальні перенос рядків
   if (json.private_key) {
     json.private_key = json.private_key.replace(/\\n/g, "\n");
   }

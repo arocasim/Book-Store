@@ -43,13 +43,13 @@ export interface CartItem {
 }
 
 export interface Order {
-  id: string;          // було number
-  userId?: string;     // можна лишити необов'язково
+  id: string;
+  userId?: string;
   items: CartItem[];
   total: number;
-  date: string;        // будемо класти dateIso
+  date: string;
   status: string;
-  customer?: any;      // якщо захочеш показувати адресу/тел
+  customer?: any;
 }
 
 
