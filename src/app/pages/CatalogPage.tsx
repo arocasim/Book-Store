@@ -80,7 +80,7 @@ export const CatalogPage: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Помилка сервера');
+        throw new Error(data.error || data.detail || 'Помилка сервера');
       }
 
       const validRecs = (Array.isArray(data.recommendations) ? data.recommendations : [])

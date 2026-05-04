@@ -104,11 +104,16 @@ ${booksContext}
       });
     } catch (e) {
       console.error("AI recommend error:", e);
-      return res.status(500).json({
-        error: e?.message?.includes("API_KEY")
-          ? "Невірний API ключ Gemini"
-          : "Помилка AI-сервісу. Спробуйте пізніше.",
-      });
+      const msg = e?.message || String(e);
+      let error = "Помилка AI-сервісу. Спробуйте пізніше.";
+      if (msg.includes("API_KEY") || msg.includes("API key not valid")) {
+        error = "Невірний API ключ Gemini";
+      } else if (msg.includes("quota") || msg.includes("429")) {
+        error = "Перевищено ліміт запитів. Зачекайте хвилину.";
+      } else if (msg.includes("PERMISSION_DENIED")) {
+        error = "API ключ не має доступу. Увімкніть Generative Language API.";
+      }
+      return res.status(500).json({ error, detail: msg.substring(0, 200) });
     }
   });
 
