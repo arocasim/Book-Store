@@ -1,28 +1,17 @@
 import { Router } from "express";
-import { dbAdmin } from "../firebaseAdmin.js";
-
-const normalizeCart = (raw) => {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((x) => ({
-      bookId: Number(x?.bookId),
-      quantity: Number(x?.quantity),
-    }))
-    .filter((x) => Number.isFinite(x.bookId) && Number.isFinite(x.quantity) && x.quantity > 0);
-};
+import { pool } from "../db.js";
 
 export function cartRouter() {
   const router = Router();
 
   router.get("/", async (req, res) => {
     try {
-      const uid = req.user.uid;
-
-      const snap = await dbAdmin.collection("users").doc(uid).get();
-      const data = snap.exists ? snap.data() : {};
-      const cart = normalizeCart(data?.cart);
-
-      res.json({ ok: true, cart });
+      const userId = req.dbUser.id;
+      const { rows } = await pool.query(
+        `SELECT book_id AS "bookId", quantity FROM cart_items WHERE user_id = $1`,
+        [userId]
+      );
+      res.json({ ok: true, cart: rows });
     } catch (e) {
       console.error("cart get error:", e);
       res.status(500).json({ error: e?.message || "Server error" });
@@ -31,11 +20,38 @@ export function cartRouter() {
 
   router.put("/", async (req, res) => {
     try {
-      const uid = req.user.uid;
-      const next = normalizeCart(req.body?.cart);
+      const userId = req.dbUser.id;
+      const items = Array.isArray(req.body?.cart) ? req.body.cart : [];
 
-      await dbAdmin.collection("users").doc(uid).set({ cart: next }, { merge: true });
-      res.json({ ok: true, cart: next });
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("DELETE FROM cart_items WHERE user_id = $1", [userId]);
+
+        for (const item of items) {
+          const bookId = Number(item?.bookId);
+          const quantity = Number(item?.quantity);
+          if (Number.isFinite(bookId) && Number.isFinite(quantity) && quantity > 0) {
+            await client.query(
+              `INSERT INTO cart_items (user_id, book_id, quantity) VALUES ($1, $2, $3)
+               ON CONFLICT (user_id, book_id) DO UPDATE SET quantity = $3`,
+              [userId, bookId, quantity]
+            );
+          }
+        }
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+
+      const { rows } = await pool.query(
+        `SELECT book_id AS "bookId", quantity FROM cart_items WHERE user_id = $1`,
+        [userId]
+      );
+      res.json({ ok: true, cart: rows });
     } catch (e) {
       console.error("cart put error:", e);
       res.status(500).json({ error: e?.message || "Server error" });
@@ -44,26 +60,21 @@ export function cartRouter() {
 
   router.post("/add", async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const userId = req.dbUser.id;
       const bookId = Number(req.body?.bookId);
       if (!Number.isFinite(bookId)) return res.status(400).json({ error: "Bad bookId" });
 
-      const uref = dbAdmin.collection("users").doc(uid);
+      await pool.query(
+        `INSERT INTO cart_items (user_id, book_id, quantity) VALUES ($1, $2, 1)
+         ON CONFLICT (user_id, book_id) DO UPDATE SET quantity = cart_items.quantity + 1`,
+        [userId, bookId]
+      );
 
-      const cart = await dbAdmin.runTransaction(async (tx) => {
-        const snap = await tx.get(uref);
-        const data = snap.exists ? snap.data() : {};
-        const current = normalizeCart(data?.cart);
-
-        const map = new Map(current.map((i) => [i.bookId, i.quantity]));
-        map.set(bookId, (map.get(bookId) || 0) + 1);
-
-        const next = Array.from(map.entries()).map(([bookId, quantity]) => ({ bookId, quantity }));
-        tx.set(uref, { cart: next }, { merge: true });
-        return next;
-      });
-
-      res.json({ ok: true, cart });
+      const { rows } = await pool.query(
+        `SELECT book_id AS "bookId", quantity FROM cart_items WHERE user_id = $1`,
+        [userId]
+      );
+      res.json({ ok: true, cart: rows });
     } catch (e) {
       console.error("cart add error:", e);
       res.status(500).json({ error: e?.message || "Server error" });
@@ -72,30 +83,31 @@ export function cartRouter() {
 
   router.patch("/item", async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const userId = req.dbUser.id;
       const bookId = Number(req.body?.bookId);
       const quantity = Number(req.body?.quantity);
 
       if (!Number.isFinite(bookId)) return res.status(400).json({ error: "Bad bookId" });
       if (!Number.isFinite(quantity)) return res.status(400).json({ error: "Bad quantity" });
 
-      const uref = dbAdmin.collection("users").doc(uid);
+      if (quantity <= 0) {
+        await pool.query(
+          "DELETE FROM cart_items WHERE user_id = $1 AND book_id = $2",
+          [userId, bookId]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO cart_items (user_id, book_id, quantity) VALUES ($1, $2, $3)
+           ON CONFLICT (user_id, book_id) DO UPDATE SET quantity = $3`,
+          [userId, bookId, quantity]
+        );
+      }
 
-      const cart = await dbAdmin.runTransaction(async (tx) => {
-        const snap = await tx.get(uref);
-        const data = snap.exists ? snap.data() : {};
-        const current = normalizeCart(data?.cart);
-
-        const map = new Map(current.map((i) => [i.bookId, i.quantity]));
-        if (quantity <= 0) map.delete(bookId);
-        else map.set(bookId, quantity);
-
-        const next = Array.from(map.entries()).map(([bookId, quantity]) => ({ bookId, quantity }));
-        tx.set(uref, { cart: next }, { merge: true });
-        return next;
-      });
-
-      res.json({ ok: true, cart });
+      const { rows } = await pool.query(
+        `SELECT book_id AS "bookId", quantity FROM cart_items WHERE user_id = $1`,
+        [userId]
+      );
+      res.json({ ok: true, cart: rows });
     } catch (e) {
       console.error("cart patch error:", e);
       res.status(500).json({ error: e?.message || "Server error" });
@@ -104,23 +116,20 @@ export function cartRouter() {
 
   router.delete("/item/:bookId", async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const userId = req.dbUser.id;
       const bookId = Number(req.params.bookId);
       if (!Number.isFinite(bookId)) return res.status(400).json({ error: "Bad bookId" });
 
-      const uref = dbAdmin.collection("users").doc(uid);
+      await pool.query(
+        "DELETE FROM cart_items WHERE user_id = $1 AND book_id = $2",
+        [userId, bookId]
+      );
 
-      const cart = await dbAdmin.runTransaction(async (tx) => {
-        const snap = await tx.get(uref);
-        const data = snap.exists ? snap.data() : {};
-        const current = normalizeCart(data?.cart);
-
-        const next = current.filter((i) => i.bookId !== bookId);
-        tx.set(uref, { cart: next }, { merge: true });
-        return next;
-      });
-
-      res.json({ ok: true, cart });
+      const { rows } = await pool.query(
+        `SELECT book_id AS "bookId", quantity FROM cart_items WHERE user_id = $1`,
+        [userId]
+      );
+      res.json({ ok: true, cart: rows });
     } catch (e) {
       console.error("cart delete error:", e);
       res.status(500).json({ error: e?.message || "Server error" });
@@ -129,8 +138,8 @@ export function cartRouter() {
 
   router.delete("/", async (req, res) => {
     try {
-      const uid = req.user.uid;
-      await dbAdmin.collection("users").doc(uid).set({ cart: [] }, { merge: true });
+      const userId = req.dbUser.id;
+      await pool.query("DELETE FROM cart_items WHERE user_id = $1", [userId]);
       res.json({ ok: true, cart: [] });
     } catch (e) {
       console.error("cart clear error:", e);

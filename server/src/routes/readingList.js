@@ -1,18 +1,17 @@
 import { Router } from "express";
-import { dbAdmin } from "../firebaseAdmin.js";
+import { pool } from "../db.js";
 
 export function readingListRouter() {
   const router = Router();
 
   router.get("/", async (req, res) => {
     try {
-      const uid = req.user.uid;
-
-      const snap = await dbAdmin.collection("users").doc(uid).get();
-      const data = snap.exists ? snap.data() : {};
-      const list = Array.isArray(data?.readingList) ? data.readingList : [];
-
-      res.json({ ok: true, readingList: list });
+      const userId = req.dbUser.id;
+      const { rows } = await pool.query(
+        "SELECT book_id FROM reading_list WHERE user_id = $1 ORDER BY added_at DESC",
+        [userId]
+      );
+      res.json({ ok: true, readingList: rows.map((r) => r.book_id) });
     } catch (e) {
       console.error("reading-list get error:", e);
       res.status(500).json({ error: e?.message || "Server error" });
@@ -21,24 +20,15 @@ export function readingListRouter() {
 
   router.post("/", async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const userId = req.dbUser.id;
       const bookId = Number(req.body?.bookId);
-
       if (!Number.isFinite(bookId)) return res.status(400).json({ error: "Bad bookId" });
 
-      const uref = dbAdmin.collection("users").doc(uid);
-
-      await dbAdmin.runTransaction(async (tx) => {
-        const snap = await tx.get(uref);
-        const data = snap.exists ? snap.data() : {};
-        const current = Array.isArray(data?.readingList) ? data.readingList : [];
-
-        // щоб не було дубля
-        const set = new Set(current.map((x) => Number(x)));
-        set.add(bookId);
-
-        tx.set(uref, { readingList: Array.from(set) }, { merge: true });
-      });
+      await pool.query(
+        `INSERT INTO reading_list (user_id, book_id) VALUES ($1, $2)
+         ON CONFLICT (user_id, book_id) DO NOTHING`,
+        [userId, bookId]
+      );
 
       res.json({ ok: true });
     } catch (e) {
@@ -49,22 +39,14 @@ export function readingListRouter() {
 
   router.delete("/:bookId", async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const userId = req.dbUser.id;
       const bookId = Number(req.params.bookId);
-
       if (!Number.isFinite(bookId)) return res.status(400).json({ error: "Bad bookId" });
 
-      const uref = dbAdmin.collection("users").doc(uid);
-
-      await dbAdmin.runTransaction(async (tx) => {
-        const snap = await tx.get(uref);
-        const data = snap.exists ? snap.data() : {};
-        const current = Array.isArray(data?.readingList) ? data.readingList : [];
-
-        const next = current.map((x) => Number(x)).filter((id) => id !== bookId);
-
-        tx.set(uref, { readingList: next }, { merge: true });
-      });
+      await pool.query(
+        "DELETE FROM reading_list WHERE user_id = $1 AND book_id = $2",
+        [userId, bookId]
+      );
 
       res.json({ ok: true });
     } catch (e) {

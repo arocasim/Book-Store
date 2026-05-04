@@ -1,40 +1,48 @@
 import { Router } from "express";
-import { dbAdmin } from "../firebaseAdmin.js";
+import { pool } from "../db.js";
 
 export function offersRouter() {
   const router = Router();
 
   router.get("/", async (req, res) => {
     try {
-      const snap = await dbAdmin
-        .collection("offers")
-        .where("active", "==", true)
-        .orderBy("discount", "desc")
-        .get();
+      const { rows: offers } = await pool.query(`
+        SELECT id, title, description, original_price AS "originalPrice",
+               discounted_price AS "discountedPrice", discount, active
+        FROM special_offers
+        WHERE active = TRUE
+        ORDER BY discount DESC
+      `);
 
-      const offers = snap.docs.map((d) => {
-        const data = d.data() || {};
-        const rawIds = Array.isArray(data.bookIds) ? data.bookIds : [];
-        const bookIds = rawIds
-          .map((x) => Number(x))
-          .filter((n) => Number.isFinite(n));
+      const offerIds = offers.map((o) => o.id);
+      let booksByOffer = {};
 
-        return {
-          id: d.id,
-          title: String(data.title ?? ""),
-          description: String(data.description ?? ""),
-          bookIds,
-          originalPrice: Number(data.originalPrice ?? 0),
-          discountedPrice: Number(data.discountedPrice ?? 0),
-          discount: Number(data.discount ?? 0),
-          active: data.active === undefined ? true : Boolean(data.active),
-        };
-      });
+      if (offerIds.length > 0) {
+        const { rows: links } = await pool.query(
+          `SELECT offer_id, book_id FROM special_offer_books WHERE offer_id = ANY($1)`,
+          [offerIds]
+        );
+        for (const link of links) {
+          if (!booksByOffer[link.offer_id]) booksByOffer[link.offer_id] = [];
+          booksByOffer[link.offer_id].push(link.book_id);
+        }
+      }
 
-      return res.json({ ok: true, offers });
+      const result = offers.map((o) => ({
+        id: String(o.id),
+        title: o.title,
+        description: o.description || "",
+        bookIds: booksByOffer[o.id] || [],
+        originalPrice: Number(o.originalPrice),
+        discountedPrice: Number(o.discountedPrice),
+        discount: Number(o.discount),
+        active: o.active,
+      }));
+
+      res.json({ ok: true, offers: result });
     } catch (e) {
       console.error("get offers error:", e);
-      return res.status(500).json({ error: e?.message || "Server error" });
+      res.status(500).json({ error: e?.message || "Server error" });
     }
   });
 

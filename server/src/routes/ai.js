@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { dbAdmin } from "../firebaseAdmin.js";
+import { pool } from "../db.js";
 
 let cachedBooks = null;
 let cacheTime = 0;
@@ -9,8 +9,16 @@ const CACHE_TTL = 5 * 60 * 1000;
 async function getBooks() {
   if (cachedBooks && Date.now() - cacheTime < CACHE_TTL) return cachedBooks;
 
-  const snap = await dbAdmin.collection("books").get();
-  cachedBooks = snap.docs.map((d) => ({ ...d.data(), id: Number(d.id) }));
+  const { rows } = await pool.query(`
+    SELECT b.id, b.title, a.name AS author, c.name AS category,
+           b.price, b.rating, b.description
+    FROM books b
+    JOIN authors a ON b.author_id = a.id
+    JOIN categories c ON b.category_id = c.id
+    ORDER BY b.title
+  `);
+
+  cachedBooks = rows;
   cacheTime = Date.now();
   return cachedBooks;
 }
@@ -41,7 +49,7 @@ export function aiRouter() {
       const booksContext = books
         .map(
           (b) =>
-            `[ID:${b.id}] "${b.title}" — ${b.author} | Категорія: ${b.category} | ${b.price}₴ | Рейтинг: ${(b.rating || 0).toFixed(1)} | ${(b.description || "").substring(0, 200)}`
+            `[ID:${b.id}] "${b.title}" — ${b.author} | Категорія: ${b.category} | ${Number(b.price)}₴ | Рейтинг: ${(Number(b.rating) || 0).toFixed(1)} | ${(b.description || "").substring(0, 200)}`
         )
         .join("\n");
 
