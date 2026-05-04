@@ -1,15 +1,11 @@
 import React from 'react';
 import { User, Mail, LogOut, Moon, Sun } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
-interface ProfilePageProps {
-  onNavigate: (page: string) => void;
-  theme: string;
-  toggleTheme: () => void;
-}
-
-export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, theme, toggleTheme }) => {
-  const { user, logout, orders } = useAppContext();
+export const ProfilePage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout, orders, theme, toggleTheme } = useAppContext();
 
   if (!user) {
     return (
@@ -18,7 +14,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, theme, tog
           <h1>Профіль</h1>
           <div className="empty-state">
             <p>Для перегляду профілю необхідно увійти в систему</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('auth')}>
+            <button className="btn btn-primary" onClick={() => navigate('/auth')}>
               Увійти
             </button>
           </div>
@@ -29,7 +25,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, theme, tog
 
   const handleLogout = () => {
     logout();
-    onNavigate('home');
+    navigate('/');
   };
 
   const userOrders = orders.filter(order => order.userId === user.id);
@@ -93,16 +89,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, theme, tog
           </div>
 
           <div className="profile-actions">
-            <button
-              className="btn btn-primary"
-              onClick={() => onNavigate('orders')}
-            >
+            <button className="btn btn-primary" onClick={() => navigate('/orders')}>
               Історія покупок
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => onNavigate('reading-list')}
-            >
+            <button className="btn btn-secondary" onClick={() => navigate('/reading-list')}>
               Список для читання
             </button>
           </div>

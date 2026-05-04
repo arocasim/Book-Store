@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 
@@ -7,6 +8,7 @@ import { booksRouter } from "./routes/books.js";
 import { offersRouter } from "./routes/offers.js";
 import { readingListRouter } from "./routes/readingList.js";
 import { cartRouter } from "./routes/cart.js";
+import { aiRouter } from "./routes/ai.js";
 
 const app = express();
 
@@ -38,6 +40,7 @@ app.use("/api/books", booksRouter());
 app.use("/api/offers", offersRouter());
 app.use("/api/reading-list", requireAuth, readingListRouter());
 app.use("/api/cart", requireAuth, cartRouter());
+app.use("/api/ai", aiRouter());
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

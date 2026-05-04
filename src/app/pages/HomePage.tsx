@@ -1,18 +1,15 @@
 import React from 'react';
 import { Star, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { BookCard } from '../components/BookCard';
 import { SpecialOffers } from '../components/SpecialOffers';
 
-interface HomePageProps {
-  onNavigate: (page: string, bookId?: number) => void;
-}
-
-export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
+export const HomePage: React.FC = () => {
   const { books } = useAppContext();
+  const navigate = useNavigate();
 
   const featuredBooks = books.filter(book => book.featured);
-  const specialOffers = books.filter(book => book.special);
   const discountedBooks = books.filter(book => book.discount && book.discount > 0);
 
   return (
@@ -24,7 +21,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <p>
               Найбільший вибір української літератури. Знижки до 30% на обрані книги!
             </p>
-            <button className="btn btn-primary btn-large" onClick={() => onNavigate('catalog')}>
+            <button className="btn btn-primary btn-large" onClick={() => navigate('/catalog')}>
               Переглянути каталог
             </button>
           </div>
@@ -32,7 +29,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       <div className="container">
-        <SpecialOffers onNavigate={onNavigate} />
+        <SpecialOffers />
 
         {featuredBooks.length > 0 && (
           <section className="section">
@@ -42,11 +39,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
             <div className="books-grid">
               {featuredBooks.map(book => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  onViewDetails={(id) => onNavigate('book', id)}
-                />
+                <BookCard key={book.id} book={book} />
               ))}
             </div>
           </section>
@@ -60,11 +53,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
             <div className="books-grid">
               {discountedBooks.slice(0, 4).map(book => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  onViewDetails={(id) => onNavigate('book', id)}
-                />
+                <BookCard key={book.id} book={book} />
               ))}
             </div>
           </section>

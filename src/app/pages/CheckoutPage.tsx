@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
-interface CheckoutPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
+export const CheckoutPage: React.FC = () => {
+  const navigate = useNavigate();
   const { cart, books, user, placeOrder } = useAppContext();
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -27,22 +26,22 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
   }, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!user) {
-    alert("Для оформлення замовлення необхідно увійти в систему");
-    onNavigate("auth");
-    return;
-  }
+    if (!user) {
+      toast.warning("Для оформлення замовлення необхідно увійти в систему");
+      navigate("/auth");
+      return;
+    }
 
-  try {
-    await placeOrder(cart, total, formData);
-    onNavigate("orders");
-  } catch (err: any) {
-    alert(err?.message || "Помилка оформлення замовлення");
-  }
-};
-
+    try {
+      await placeOrder(cart, total, formData);
+      toast.success("Замовлення успішно оформлено!");
+      navigate("/orders");
+    } catch (err: any) {
+      toast.error(err?.message || "Помилка оформлення замовлення");
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -58,7 +57,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
           <h1>Оформлення замовлення</h1>
           <div className="empty-state">
             <p>Ваш кошик порожній</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('catalog')}>
+            <button className="btn btn-primary" onClick={() => navigate('/catalog')}>
               Перейти до каталогу
             </button>
           </div>
@@ -78,33 +77,15 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
               <h2>Контактна інформація</h2>
               <div className="form-group">
                 <label>Ім'я *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="text" name="name" value={formData.name} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label>Email *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label>Телефон *</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required />
               </div>
             </section>
 
@@ -112,46 +93,22 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
               <h2>Адреса доставки</h2>
               <div className="form-group">
                 <label>Місто *</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="text" name="city" value={formData.city} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label>Адреса *</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="text" name="address" value={formData.address} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label>Поштовий індекс *</label>
-                <input
-                  type="text"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required />
               </div>
             </section>
 
             <section className="form-section">
               <h2>Коментар до замовлення</h2>
               <div className="form-group">
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  placeholder="Додаткові побажання..."
-                  rows={4}
-                />
+                <textarea name="notes" value={formData.notes} onChange={handleChange} placeholder="Додаткові побажання..." rows={4} />
               </div>
             </section>
 

@@ -1,11 +1,10 @@
 import React from 'react';
 import { BookOpen, Users, Heart, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-interface AboutPageProps {
-  onNavigate: (page: string) => void;
-}
+export const AboutPage: React.FC = () => {
+  const navigate = useNavigate();
 
-export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
   return (
     <div className="page">
       <div className="container">
@@ -76,7 +75,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
         <section className="about-cta">
           <h2>Почніть свою подорож у світ книг</h2>
           <p>Приєднуйтесь до тисяч задоволених читачів, які обрали наш магазин</p>
-          <button className="btn btn-primary btn-large" onClick={() => onNavigate('catalog')}>
+          <button className="btn btn-primary btn-large" onClick={() => navigate('/catalog')}>
             Переглянути каталог
           </button>
         </section>

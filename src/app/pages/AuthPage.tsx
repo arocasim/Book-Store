@@ -1,11 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
-interface AuthPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
+export const AuthPage: React.FC = () => {
+  const navigate = useNavigate();
   const { login, register, googleLogin } = useAppContext();
 
   const [isLogin, setIsLogin] = useState(true);
@@ -21,14 +19,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
     try {
       if (isLogin) {
         const success = await login(formData.email, formData.password);
-        if (success) onNavigate("home");
+        if (success) navigate("/");
         else setError("Невірний email або пароль");
       } else {
         if (formData.name.length < 2) return setError("Ім'я повинно містити принаймні 2 символи");
         if (formData.password.length < 6) return setError("Пароль повинен містити принаймні 6 символів");
 
         const success = await register(formData.name, formData.email, formData.password);
-        if (success) onNavigate("home");
+        if (success) navigate("/");
         else setError("Не вдалося зареєструватися (можливо email вже використовується)");
       }
     } finally {
@@ -45,7 +43,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
     setLoading(true);
     try {
       const success = await googleLogin();
-      if (success) onNavigate("home");
+      if (success) navigate("/");
       else setError("Не вдалося увійти через Google");
     } finally {
       setLoading(false);

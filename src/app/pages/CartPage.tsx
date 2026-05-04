@@ -1,11 +1,8 @@
 import React, { useMemo } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import type { Book } from "../types";
-
-interface CartPageProps {
-  onNavigate: (page: string) => void;
-}
 
 type Offer = {
   id: string;
@@ -18,7 +15,8 @@ type Offer = {
   active?: boolean;
 };
 
-export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
+export const CartPage: React.FC = () => {
+  const navigate = useNavigate();
   const {
     cart,
     books,
@@ -132,7 +130,7 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
           <h1>Кошик</h1>
           <div className="empty-state">
             <p>Ваш кошик порожній</p>
-            <button className="btn btn-primary" onClick={() => onNavigate("catalog")}>
+            <button className="btn btn-primary" onClick={() => navigate("/catalog")}>
               Перейти до каталогу
             </button>
           </div>
@@ -193,7 +191,6 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
                 <span>{rawTotal} ₴</span>
               </div>
 
-              {}
               {bundleCalc.savedTotal > 0 && (
                 <div className="cart-summary-row" style={{ color: "var(--success-color)" }}>
                   <span>Знижка (набори):</span>
@@ -211,11 +208,10 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
                 <span>{total} ₴</span>
               </div>
 
-              <button className="btn btn-primary btn-large btn-full" onClick={() => onNavigate("checkout")}>
+              <button className="btn btn-primary btn-large btn-full" onClick={() => navigate("/checkout")}>
                 Оформити замовлення
               </button>
 
-              {}
               {bundleCalc.bundlesApplied.length > 0 && (
                 <div style={{ marginTop: 12, opacity: 0.85, fontSize: 14 }}>
                   <div style={{ fontWeight: 600, marginBottom: 6 }}>Застосовано набори:</div>

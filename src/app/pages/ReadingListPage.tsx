@@ -1,12 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { BookCard } from '../components/BookCard';
 
-interface ReadingListPageProps {
-  onNavigate: (page: string, bookId?: number) => void;
-}
-
-export const ReadingListPage: React.FC<ReadingListPageProps> = ({ onNavigate }) => {
+export const ReadingListPage: React.FC = () => {
+  const navigate = useNavigate();
   const { readingList, books, user } = useAppContext();
 
   if (!user) {
@@ -16,7 +14,7 @@ export const ReadingListPage: React.FC<ReadingListPageProps> = ({ onNavigate }) 
           <h1>Список для читання</h1>
           <div className="empty-state">
             <p>Для використання списку читання необхідно увійти в систему</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('auth')}>
+            <button className="btn btn-primary" onClick={() => navigate('/auth')}>
               Увійти
             </button>
           </div>
@@ -34,7 +32,7 @@ export const ReadingListPage: React.FC<ReadingListPageProps> = ({ onNavigate }) 
           <h1>Список для читання</h1>
           <div className="empty-state">
             <p>Ваш список для читання порожній</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('catalog')}>
+            <button className="btn btn-primary" onClick={() => navigate('/catalog')}>
               Додати книги
             </button>
           </div>
@@ -53,11 +51,7 @@ export const ReadingListPage: React.FC<ReadingListPageProps> = ({ onNavigate }) 
 
         <div className="books-grid">
           {readingListBooks.map(book => (
-            <BookCard
-              key={book.id}
-              book={book}
-              onViewDetails={(id) => onNavigate('book', id)}
-            />
+            <BookCard key={book.id} book={book} />
           ))}
         </div>
       </div>

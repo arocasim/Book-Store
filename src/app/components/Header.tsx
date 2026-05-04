@@ -1,65 +1,64 @@
 import React from "react";
 import { ShoppingCart, User, BookOpen, Menu, X } from "lucide-react";
+import { toast } from "sonner";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
-interface HeaderProps {
-  onNavigate: (page: string) => void;
-  currentPage: string;
-}
-
-export const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
+export const Header: React.FC = () => {
   const { user, cart } = useAppContext();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const go = (page: string) => {
-    onNavigate(page);
+  const go = (path: string) => {
+    navigate(path);
     setMobileMenuOpen(false);
   };
 
   const requireLogin = () => {
-    alert("Спочатку увійдіть або зареєструйтесь.");
-    go("auth");
+    toast.warning("Спочатку увійдіть або зареєструйтесь.");
+    go("/auth");
   };
 
   const handleCartClick = () => {
     if (!user) return requireLogin();
-    go("cart");
+    go("/cart");
   };
 
   const handleProfileClick = () => {
     if (!user) return requireLogin();
-    go("profile");
+    go("/profile");
   };
 
   return (
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <div className="logo" onClick={() => go("home")}>
+          <div className="logo" onClick={() => go("/")}>
             <BookOpen size={32} />
             <span>Книжковий Світ</span>
           </div>
 
           <nav className={`nav ${mobileMenuOpen ? "nav-open" : ""}`}>
             <button
-              className={`nav-link ${currentPage === "home" ? "active" : ""}`}
-              onClick={() => go("home")}
+              className={`nav-link ${pathname === "/" ? "active" : ""}`}
+              onClick={() => go("/")}
             >
               Головна
             </button>
 
             <button
-              className={`nav-link ${currentPage === "catalog" ? "active" : ""}`}
-              onClick={() => go("catalog")}
+              className={`nav-link ${pathname === "/catalog" ? "active" : ""}`}
+              onClick={() => go("/catalog")}
             >
               Каталог
             </button>
 
             <button
-              className={`nav-link ${currentPage === "about" ? "active" : ""}`}
-              onClick={() => go("about")}
+              className={`nav-link ${pathname === "/about" ? "active" : ""}`}
+              onClick={() => go("/about")}
             >
               Про нас
             </button>
@@ -67,15 +66,15 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
             {user && (
               <>
                 <button
-                  className={`nav-link ${currentPage === "reading-list" ? "active" : ""}`}
-                  onClick={() => go("reading-list")}
+                  className={`nav-link ${pathname === "/reading-list" ? "active" : ""}`}
+                  onClick={() => go("/reading-list")}
                 >
                   Список читання
                 </button>
 
                 <button
-                  className={`nav-link ${currentPage === "orders" ? "active" : ""}`}
-                  onClick={() => go("orders")}
+                  className={`nav-link ${pathname === "/orders" ? "active" : ""}`}
+                  onClick={() => go("/orders")}
                 >
                   Історія покупок
                 </button>
@@ -102,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                 <User size={20} />
               </button>
             ) : (
-              <button className="btn btn-primary" onClick={() => go("auth")}>
+              <button className="btn btn-primary" onClick={() => go("/auth")}>
                 Увійти
               </button>
             )}

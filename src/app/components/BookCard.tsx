@@ -1,22 +1,23 @@
 import React from "react";
 import { Star, ShoppingCart, Heart } from "lucide-react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { Book } from "../types";
 import { useAppContext } from "../context/AppContext";
 
 interface BookCardProps {
   book: Book;
-  onViewDetails: (bookId: number) => void;
-  onNavigate: (page: string) => void;
 }
 
-export const BookCard: React.FC<BookCardProps> = ({ book, onViewDetails, onNavigate }) => {
+export const BookCard: React.FC<BookCardProps> = ({ book }) => {
   const { user, addToCart, addToReadingList, readingList } = useAppContext();
+  const navigate = useNavigate();
 
   const isInReadingList = readingList.includes(book.id);
 
   const needAuth = () => {
-    alert("Спочатку увійдіть або зареєструйтесь.");
-    onNavigate("auth");
+    toast.warning("Спочатку увійдіть або зареєструйтесь.");
+    navigate("/auth");
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -25,8 +26,14 @@ export const BookCard: React.FC<BookCardProps> = ({ book, onViewDetails, onNavig
 
     try {
       await addToCart(book.id);
+      toast.success(`«${book.title}» додано до кошика`, {
+        action: {
+          label: "Перейти до кошика",
+          onClick: () => navigate("/cart"),
+        },
+      });
     } catch (err: any) {
-      alert(err?.message || "Не вдалося додати в кошик");
+      toast.error(err?.message || "Не вдалося додати в кошик");
     }
   };
 
@@ -36,13 +43,14 @@ export const BookCard: React.FC<BookCardProps> = ({ book, onViewDetails, onNavig
 
     try {
       await addToReadingList(book.id);
+      toast.success(`«${book.title}» додано до списку читання`);
     } catch (err: any) {
-      alert(err?.message || "Не вдалося змінити список читання");
+      toast.error(err?.message || "Не вдалося змінити список читання");
     }
   };
 
   return (
-    <div className="book-card" onClick={() => onViewDetails(book.id)}>
+    <div className="book-card" onClick={() => navigate(`/book/${book.id}`)}>
       {book.discount ? <div className="book-badge">-{book.discount}%</div> : null}
       {book.special && !book.discount ? <div className="book-badge special">Акція</div> : null}
 

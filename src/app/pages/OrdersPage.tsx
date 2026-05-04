@@ -1,12 +1,9 @@
 import React from 'react';
-import { Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
-interface OrdersPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
+export const OrdersPage: React.FC = () => {
+  const navigate = useNavigate();
   const { orders, user, books } = useAppContext();
 
   if (!user) {
@@ -16,7 +13,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           <h1>Історія покупок</h1>
           <div className="empty-state">
             <p>Для перегляду історії покупок необхідно увійти в систему</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('auth')}>
+            <button className="btn btn-primary" onClick={() => navigate('/auth')}>
               Увійти
             </button>
           </div>
@@ -34,7 +31,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           <h1>Історія покупок</h1>
           <div className="empty-state">
             <p>У вас ще немає покупок</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('catalog')}>
+            <button className="btn btn-primary" onClick={() => navigate('/catalog')}>
               Перейти до каталогу
             </button>
           </div>
@@ -49,7 +46,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
         <h1>Історія покупок</h1>
 
         <div className="orders-list">
-          {userOrders.reverse().map(order => (
+          {[...userOrders].reverse().map(order => (
             <div key={order.id} className="order-card">
               <div className="order-header">
                 <div>

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Star, ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
-interface BookDetailsPageProps {
-  bookId: number;
-  onNavigate: (page: string) => void;
-}
+export const BookDetailsPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const bookId = Number(id);
 
-export const BookDetailsPage: React.FC<BookDetailsPageProps> = ({ bookId, onNavigate }) => {
   const { books, addToCart, addToReadingList, removeFromReadingList, readingList, user, addReview } = useAppContext();
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
@@ -19,7 +20,7 @@ export const BookDetailsPage: React.FC<BookDetailsPageProps> = ({ bookId, onNavi
       <div className="page">
         <div className="container">
           <h1>Книгу не знайдено</h1>
-          <button className="btn btn-primary" onClick={() => onNavigate('catalog')}>
+          <button className="btn btn-primary" onClick={() => navigate('/catalog')}>
             Повернутися до каталогу
           </button>
         </div>
@@ -29,27 +30,65 @@ export const BookDetailsPage: React.FC<BookDetailsPageProps> = ({ bookId, onNavi
 
   const isInReadingList = readingList.includes(book.id);
 
+  const handleAddToCart = async () => {
+    if (!user) {
+      toast.warning("Спочатку увійдіть або зареєструйтесь.");
+      navigate("/auth");
+      return;
+    }
+    try {
+      await addToCart(book.id);
+      toast.success(`«${book.title}» додано до кошика`, {
+        action: {
+          label: "Перейти до кошика",
+          onClick: () => navigate("/cart"),
+        },
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Не вдалося додати в кошик");
+    }
+  };
+
+  const handleToggleReadingList = async () => {
+    if (!user) {
+      toast.warning("Спочатку увійдіть або зареєструйтесь.");
+      navigate("/auth");
+      return;
+    }
+    try {
+      if (isInReadingList) {
+        await removeFromReadingList(book.id);
+        toast.success(`«${book.title}» видалено зі списку читання`);
+      } else {
+        await addToReadingList(book.id);
+        toast.success(`«${book.title}» додано до списку читання`);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Не вдалося змінити список читання");
+    }
+  };
+
   const handleSubmitReview = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!user) {
-    alert("Для залишення відгуку необхідно увійти в систему");
-    return;
-  }
+    e.preventDefault();
+    if (!user) {
+      toast.warning("Для залишення відгуку необхідно увійти в систему");
+      return;
+    }
 
-  try {
-    await addReview(book.id, newRating, newComment);
-    setNewComment("");
-    setNewRating(5);
-  } catch (err: any) {
-    alert(err?.message || "Помилка додавання відгуку");
-  }
-};
-
+    try {
+      await addReview(book.id, newRating, newComment);
+      setNewComment("");
+      setNewRating(5);
+      toast.success("Відгук успішно додано!");
+    } catch (err: any) {
+      toast.error(err?.message || "Помилка додавання відгуку");
+    }
+  };
 
   return (
     <div className="page">
       <div className="container">
-        <button className="back-button" onClick={() => onNavigate('catalog')}>
+        <button className="back-button" onClick={() => navigate('/catalog')}>
           <ArrowLeft size={20} />
           <span>Назад до каталогу</span>
         </button>
@@ -111,18 +150,14 @@ export const BookDetailsPage: React.FC<BookDetailsPageProps> = ({ bookId, onNavi
             <div className="book-details-actions">
               <button
                 className="btn btn-primary btn-large"
-                onClick={() => addToCart(book.id)}
+                onClick={handleAddToCart}
               >
                 <ShoppingCart size={20} />
                 Додати до кошика
               </button>
               <button
                 className={`btn ${isInReadingList ? 'btn-secondary' : 'btn-outline'}`}
-                onClick={() =>
-                  isInReadingList
-                    ? removeFromReadingList(book.id)
-                    : addToReadingList(book.id)
-                }
+                onClick={handleToggleReadingList}
               >
                 <Heart size={20} fill={isInReadingList ? 'currentColor' : 'none'} />
                 {isInReadingList ? 'У списку читання' : 'Додати до списку'}

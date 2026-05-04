@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Gift, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import type { Book } from "../types";
 
@@ -14,12 +16,9 @@ interface SpecialOffer {
   active?: boolean;
 }
 
-interface SpecialOffersProps {
-  onNavigate: (page: string, bookId?: number) => void;
-}
-
-export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
+export const SpecialOffers: React.FC = () => {
   const { user, books, addBundleToCart } = useAppContext();
+  const navigate = useNavigate();
 
   const [offers, setOffers] = useState<SpecialOffer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,8 +57,8 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
   }, [books]);
 
   const requireLogin = () => {
-    alert("Щоб додавати набори в кошик, спочатку увійдіть або зареєструйтесь.");
-    onNavigate("auth");
+    toast.warning("Щоб додавати набори в кошик, спочатку увійдіть або зареєструйтесь.");
+    navigate("/auth");
   };
 
   const handleAddBundle = async (offer: SpecialOffer) => {
@@ -67,9 +66,14 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
 
     try {
       await addBundleToCart(offer.bookIds);
-      onNavigate("cart");
+      toast.success(`Набір «${offer.title}» додано до кошика`, {
+        action: {
+          label: "Перейти до кошика",
+          onClick: () => navigate("/cart"),
+        },
+      });
     } catch (err: any) {
-      alert(err?.message || "Не вдалося додати набір до кошика");
+      toast.error(err?.message || "Не вдалося додати набір до кошика");
     }
   };
 
@@ -137,7 +141,7 @@ export const SpecialOffers: React.FC<SpecialOffersProps> = ({ onNavigate }) => {
                     <div
                       key={book.id}
                       className="special-offer-book-item"
-                      onClick={() => onNavigate("book", book.id)}
+                      onClick={() => navigate(`/book/${book.id}`)}
                       role="button"
                       tabIndex={0}
                     >
