@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Gift, ShoppingCart } from "lucide-react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { Gift, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
@@ -19,9 +19,24 @@ interface SpecialOffer {
 export const SpecialOffers: React.FC = () => {
   const { user, books, addBundleToCart } = useAppContext();
   const navigate = useNavigate();
+  const trackRef = useRef<HTMLDivElement>(null);
 
   const [offers, setOffers] = useState<SpecialOffer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [current, setCurrent] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [perView, setPerView] = useState(window.innerWidth > 768 ? 2 : 1);
+
+  const dragStart = useRef(0);
+  const dragCurrent = useRef(0);
+  const isDragging = useRef(false);
+
+  useEffect(() => {
+    const onResize = () => setPerView(window.innerWidth > 768 ? 2 : 1);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +92,52 @@ export const SpecialOffers: React.FC = () => {
     }
   };
 
+  const maxIndex = Math.max(0, offers.length - perView);
+  const slideWidth = 100 / perView;
+
+  const goTo = useCallback(
+    (index: number) => {
+      const clamped = Math.max(0, Math.min(index, maxIndex));
+      setCurrent(clamped);
+      setDragOffset(0);
+    },
+    [maxIndex]
+  );
+
+  const prev = () => goTo(current - 1);
+  const next = () => goTo(current + 1);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    isDragging.current = true;
+    dragStart.current = e.clientX;
+    dragCurrent.current = e.clientX;
+    setDragging(true);
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    dragCurrent.current = e.clientX;
+    setDragOffset(dragCurrent.current - dragStart.current);
+  };
+
+  const handlePointerUp = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    setDragging(false);
+
+    const delta = dragCurrent.current - dragStart.current;
+    const threshold = 60;
+
+    if (delta < -threshold) {
+      goTo(current + 1);
+    } else if (delta > threshold) {
+      goTo(current - 1);
+    } else {
+      setDragOffset(0);
+    }
+  };
+
   if (loading) {
     return (
       <section className="section">
@@ -108,74 +169,113 @@ export const SpecialOffers: React.FC = () => {
         <h2>Спеціальні пропозиції - Набори книг</h2>
       </div>
 
-      <div className="special-offers-grid">
-        {offers.map((offer) => {
-          const offerBooks: Book[] = (offer.bookIds || [])
-            .map((id) => booksById.get(id))
-            .filter((b): b is Book => Boolean(b));
+      <div className="offers-carousel">
+        <button
+          className="offers-carousel-arrow offers-carousel-arrow--left"
+          onClick={prev}
+          disabled={current === 0}
+          aria-label="Назад"
+        >
+          <ChevronLeft size={24} />
+        </button>
 
-          const savings = Math.max(0, Number(offer.originalPrice || 0) - Number(offer.discountedPrice || 0));
+        <div className="offers-carousel-viewport">
+          <div
+            ref={trackRef}
+            className="offers-carousel-track"
+            style={{
+              transform: `translateX(calc(-${current * slideWidth}% + ${dragging ? dragOffset : 0}px))`,
+              transition: dragging ? "none" : "transform 0.4s cubic-bezier(.4,0,.2,1)",
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          >
+            {offers.map((offer) => {
+              const offerBooks: Book[] = (offer.bookIds || [])
+                .map((id) => booksById.get(id))
+                .filter((b): b is Book => Boolean(b));
 
-          return (
-            <div key={offer.id} className="special-offer-card">
-              <div className="special-offer-badge">-{offer.discount}%</div>
+              const savings = Math.max(0, Number(offer.originalPrice || 0) - Number(offer.discountedPrice || 0));
 
-              <div className="special-offer-images">
-                {offerBooks.map((book, index) => (
-                  <div
-                    key={book.id}
-                    className="special-offer-book-image"
-                    style={{ zIndex: offerBooks.length - index }}
-                  >
-                    <img src={book.image} alt={book.title} className="w-full h-auto" />
-                  </div>
-                ))}
-              </div>
-
-              <div className="special-offer-content">
-                <h3>{offer.title}</h3>
-                <p className="special-offer-description">{offer.description}</p>
-
-                <div className="special-offer-books-list">
-                  {offerBooks.map((book, index) => (
-                    <div
-                      key={book.id}
-                      className="special-offer-book-item"
-                      onClick={() => navigate(`/book/${book.id}`)}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <span className="book-number">{index + 1}.</span>
-                      <span className="book-info">
-                        <strong>{book.title}</strong>
-                        <span className="book-author-small">{book.author}</span>
-                      </span>
+              return (
+                <div key={offer.id} className="offers-carousel-slide">
+                  <div className="offers-slide-card">
+                    <div className="offers-slide-images">
+                      <div className="special-offer-badge">-{offer.discount}%</div>
+                      {offerBooks.map((book, index) => (
+                        <div
+                          key={book.id}
+                          className="special-offer-book-image"
+                          style={{ zIndex: offerBooks.length - index }}
+                          onClick={() => navigate(`/book/${book.id}`)}
+                        >
+                          <img src={book.image} alt={book.title} draggable={false} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                <div className="special-offer-price">
-                  <div className="price-group">
-                    <span className="original-price">{offer.originalPrice} ₴</span>
-                    <span className="price large">{offer.discountedPrice} ₴</span>
+                    <div className="offers-slide-body">
+                      <h3 className="offers-slide-title">{offer.title}</h3>
+                      <p className="offers-slide-desc">{offer.description}</p>
+
+                      <div className="special-offer-books-list">
+                        {offerBooks.map((book) => (
+                          <span
+                            key={book.id}
+                            className="special-offer-book-tag"
+                            onClick={() => navigate(`/book/${book.id}`)}
+                          >
+                            {book.title}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="offers-slide-price">
+                        <span className="original-price">{offer.originalPrice} ₴</span>
+                        <span className="price large">{offer.discountedPrice} ₴</span>
+                        <span className="savings">−{savings} ₴</span>
+                      </div>
+
+                      <button
+                        className="btn btn-primary btn-full"
+                        onClick={() => handleAddBundle(offer)}
+                        disabled={offerBooks.length === 0}
+                      >
+                        <ShoppingCart size={18} />
+                        Додати набір
+                      </button>
+                    </div>
                   </div>
-                  <div className="savings">Економія: {savings} ₴</div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
 
-                <button
-                  className="btn btn-primary btn-large btn-full"
-                  onClick={() => handleAddBundle(offer)}
-                  disabled={offerBooks.length === 0}
-                  title={offerBooks.length === 0 ? "Книги набору не знайдені" : user ? "" : "Увійдіть, щоб додати набір"}
-                >
-                  <ShoppingCart size={20} />
-                  Додати набір до кошика
-                </button>
-              </div>
-            </div>
-          );
-        })}
+        <button
+          className="offers-carousel-arrow offers-carousel-arrow--right"
+          onClick={next}
+          disabled={current >= maxIndex}
+          aria-label="Вперед"
+        >
+          <ChevronRight size={24} />
+        </button>
       </div>
+
+      {offers.length > 1 && (
+        <div className="offers-carousel-dots">
+          {offers.map((_, i) => (
+            <button
+              key={i}
+              className={`offers-carousel-dot${i === current ? " active" : ""}`}
+              onClick={() => goTo(i)}
+              aria-label={`Пропозиція ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };

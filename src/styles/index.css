@@ -1430,65 +1430,117 @@ body {
   text-align: center;
 }
 
-/* Special Offers */
-.special-offers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 30px;
-  align-items: stretch;
+/* Special Offers — Swipeable Carousel */
+
+.offers-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.special-offer-card {
-  background-color: var(--card-bg);
-  border: 2px solid var(--primary-color);
+.offers-carousel-viewport {
+  flex: 1;
+  overflow: hidden;
   border-radius: 16px;
-  padding: 24px;
-  position: relative;
-  transition: all 0.3s;
+}
+
+.offers-carousel-track {
+  display: flex;
+  touch-action: pan-y;
+  user-select: none;
+  will-change: transform;
+}
+
+.offers-carousel-slide {
+  flex: 0 0 50%;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+/* --- Стрілки --- */
+.offers-carousel-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.offers-carousel-arrow:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.offers-carousel-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* --- Картка-слайд --- */
+.offers-slide-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.3s, transform 0.3s;
   height: 100%;
 }
 
-.special-offer-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-4px);
+.offers-slide-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10);
+  transform: translateY(-2px);
+}
+
+/* --- Зображення --- */
+.offers-slide-images {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 28px 20px;
+  background: var(--bg-secondary);
+  min-height: 190px;
 }
 
 .special-offer-badge {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background-color: var(--danger-color);
+  top: 14px;
+  left: 14px;
+  background: var(--danger-color);
   color: white;
-  padding: 8px 16px;
+  padding: 5px 14px;
   border-radius: 20px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   z-index: 2;
 }
 
-.special-offer-images {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  margin-bottom: 24px;
-  position: relative;
-}
-
 .special-offer-book-image {
-  width: 120px;
-  height: 180px;
-  border-radius: 8px;
+  width: 110px;
+  height: 160px;
+  border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s;
-  margin: 0 -15px;
+  margin: 0 -10px;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .special-offer-book-image:hover {
-  transform: translateY(-8px) scale(1.05);
+  transform: translateY(-6px) scale(1.05);
   z-index: 10 !important;
 }
 
@@ -1496,102 +1548,126 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
 }
 
-.special-offer-content {
+/* --- Контент --- */
+.offers-slide-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  padding: 24px 20px;
+  flex: 1;
+  min-width: 0;
 }
 
-.special-offer-content h3 {
-  font-size: 24px;
+.offers-slide-title {
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-color);
-  text-align: center;
-  margin-bottom: 8px;
+  margin: 0;
+  line-height: 1.3;
 }
 
-.special-offer-description {
-  text-align: center;
+.offers-slide-desc {
   color: var(--text-secondary);
   font-size: 14px;
-  margin-bottom: 16px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .special-offer-books-list {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.special-offer-book-item {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.special-offer-book-item:hover {
-  background-color: var(--card-bg);
-}
-
-.book-number {
-  color: var(--primary-color);
-  font-weight: 700;
-  font-size: 16px;
-  min-width: 20px;
-}
-
-.book-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-
-.book-info strong {
-  color: var(--text-color);
-  font-size: 15px;
-}
-
-.book-author-small {
+.special-offer-book-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  font-size: 12px;
   color: var(--text-secondary);
-  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.special-offer-price {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  margin-top: 8px;
+.special-offer-book-tag:hover {
+  background: var(--primary-color);
+  color: white;
 }
 
-.price-group {
+/* --- Ціна --- */
+.offers-slide-price {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
+  gap: 10px;
+  margin-top: auto;
 }
 
 .savings {
-  text-align: center;
   color: var(--success-color);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+  margin-left: auto;
 }
 
+/* --- Крапки-індикатори --- */
+.offers-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.offers-carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: var(--border-color);
+  cursor: pointer;
+  transition: all 0.25s;
+  padding: 0;
+}
+
+.offers-carousel-dot.active {
+  background: var(--primary-color);
+  transform: scale(1.25);
+}
+
+.offers-carousel-dot:hover:not(.active) {
+  background: var(--text-secondary);
+}
+
+/* --- Мобільна адаптація --- */
 @media (max-width: 768px) {
-  .special-offers-grid {
-    grid-template-columns: 1fr;
+  .offers-carousel-slide {
+    flex: 0 0 100%;
+  }
+
+  .offers-slide-images {
+    padding: 24px 20px;
+    min-height: 160px;
+  }
+
+  .special-offer-book-image {
+    width: 85px;
+    height: 125px;
+  }
+
+  .offers-slide-body {
+    padding: 20px 16px;
+  }
+
+  .offers-slide-title {
+    font-size: 17px;
+  }
+
+  .offers-carousel-arrow {
+    display: none;
   }
 
   .cart-content-vertical {
