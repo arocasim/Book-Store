@@ -1,0 +1,326 @@
+@startuml BookStore
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam class {
+  BackgroundColor #FEFECE
+  BorderColor #A80036
+  ArrowColor #A80036
+}
+skinparam package {
+  BackgroundColor #F9F9F9
+  BorderColor #666666
+  FontSize 14
+  FontStyle bold
+}
+
+' ============================================
+'  PRESENTATION LAYER (UI)
+' ============================================
+package "Presentation Layer" #E3F2FD {
+
+  class HomePage <<page>> {
+    + renderHero()
+    + renderFeatured()
+    + renderDiscounted()
+  }
+
+  class CatalogPage <<page>> {
+    - searchQuery : string
+    - category : string
+    - priceRange : [min, max]
+    - sortBy : string
+    --
+    + handleSearch()
+    + handleAISearch()
+    + filterBooks()
+  }
+
+  class BookDetailsPage <<page>> {
+    - book : Book
+    --
+    + submitReview()
+  }
+
+  class CartPage <<page>> {
+    - appliedBundles : Bundle[]
+    --
+    + calculateBundleDiscounts()
+  }
+
+  class CheckoutPage <<page>> {
+    - formData : CustomerData
+    --
+    + validateForm()
+    + handleSubmit()
+  }
+
+  class OrdersPage <<page>> {
+    + renderOrderHistory()
+  }
+
+  class AuthPage <<page>> {
+    - mode : "login" | "register"
+    --
+    + handleLogin()
+    + handleRegister()
+    + handleGoogleLogin()
+  }
+
+  class ProfilePage <<page>> {
+    + toggleTheme()
+    + renderStats()
+  }
+
+  class BookCard <<component>> {
+    - book : Book
+    --
+    + handleAddToCart()
+    + handleToggleReadingList()
+  }
+
+  class Header <<component>> {
+    - cartCount : int
+    --
+    + renderNavigation()
+  }
+
+}
+
+' ============================================
+'  BUSINESS LOGIC LAYER (Domain)
+' ============================================
+package "Business Logic Layer" #FFFDE7 {
+
+  class Book {
+    - id : int
+    - title : string
+    - isbn : string
+    - price : decimal
+    - original_price : decimal
+    - discount : int
+    - description : text
+    - image : string
+    - rating : decimal
+    - pages : int
+    - language : string
+    - year : int
+    - featured : bool
+    - special : bool
+  }
+
+  class User {
+    - id : int
+    - firebase_uid : string
+    - name : string
+    - email : string
+    - theme : string
+  }
+
+  class Author {
+    - id : int
+    - name : string
+  }
+
+  class Category {
+    - id : int
+    - name : string
+  }
+
+  class Publisher {
+    - id : int
+    - name : string
+  }
+
+  class Review {
+    - id : int
+    - rating : int [1..5]
+    - comment : text
+    - created_at : timestamp
+  }
+
+  class CartItem {
+    - id : int
+    - quantity : int
+  }
+
+  class Order {
+    - id : int
+    - total : decimal
+    - status : string
+    - customer_name : string
+    - customer_phone : string
+    - city : string
+    - address : string
+  }
+
+  class OrderItem {
+    - id : int
+    - quantity : int
+    - price : decimal
+  }
+
+  class ReadingList {
+    - id : int
+    - added_at : timestamp
+  }
+
+  class SpecialOffer {
+    - id : int
+    - title : string
+    - original_price : decimal
+    - discounted_price : decimal
+    - discount : int
+    - active : bool
+  }
+
+  class AppContext <<service>> {
+    --
+    + addToCart(bookId)
+    + removeFromCart(bookId)
+    + updateCartQuantity(bookId, qty)
+    + clearCart()
+    + addBundleToCart(bookIds[])
+    + addToReadingList(bookId)
+    + removeFromReadingList(bookId)
+    + placeOrder(customerData)
+    + addReview(bookId, rating, comment)
+  }
+
+}
+
+' ============================================
+'  DATA ACCESS LAYER (Persistence)
+' ============================================
+package "Data Access Layer" #E8F5E9 {
+
+  class DatabasePool <<repository>> {
+    - connectionString : string
+    - ssl : bool
+    --
+    + query(sql, params) : Result
+    + connect() : Client
+  }
+
+  class BooksRouter <<repository>> {
+    --
+    + getAllBooks() : Book[]
+    + addReview(bookId, userId, rating, comment)
+  }
+
+  class CartRouter <<repository>> {
+    --
+    + getCart(userId) : CartItem[]
+    + addItem(userId, bookId)
+    + updateQuantity(userId, bookId, qty)
+    + removeItem(userId, bookId)
+    + clearCart(userId)
+  }
+
+  class OrdersRouter <<repository>> {
+    --
+    + getOrders(userId) : Order[]
+    + createOrder(userId, items, customer)
+  }
+
+  class ReadingListRouter <<repository>> {
+    --
+    + getList(userId) : int[]
+    + addBook(userId, bookId)
+    + removeBook(userId, bookId)
+  }
+
+  class OffersRouter <<repository>> {
+    --
+    + getActiveOffers() : SpecialOffer[]
+  }
+
+}
+
+' ============================================
+'  EXTERNAL SERVICES (Integration)
+' ============================================
+package "External Services" #F3E5F5 {
+
+  class GeminiAI <<external>> {
+    - model : "gemini-2.5-flash"
+    - apiKey : string
+    - booksCache : Book[]
+    - cacheTTL : 5 min
+    --
+    + recommend(query) : {message, bookIds[]}
+  }
+
+  class FirebaseAuth <<external>> {
+    - serviceAccount : object
+    --
+    + verifyIdToken(token) : DecodedUser
+    + signInWithEmail(email, pass)
+    + signInWithGoogle()
+    + signOut()
+  }
+
+  class PostgreSQL <<external>> {
+    - host : string
+    - database : string
+    --
+    + executeSQL(query)
+  }
+
+}
+
+' ============================================
+'  DOMAIN RELATIONSHIPS
+' ============================================
+
+Author "1" -- "*" Book
+Category "1" -- "*" Book
+Publisher "1" -- "*" Book
+
+User "1" -- "*" Review
+Review "*" -- "1" Book
+
+User "1" -- "*" CartItem
+CartItem "*" -- "1" Book
+
+User "1" -- "*" ReadingList
+ReadingList "*" -- "1" Book
+
+User "1" -- "*" Order
+Order "1" -- "*" OrderItem
+OrderItem "*" -- "1" Book
+
+SpecialOffer "*" -- "*" Book
+
+' ============================================
+'  LAYER DEPENDENCIES (top-down)
+' ============================================
+
+HomePage ..> AppContext : uses
+CatalogPage ..> AppContext : uses
+BookDetailsPage ..> AppContext : uses
+CartPage ..> AppContext : uses
+CheckoutPage ..> AppContext : uses
+OrdersPage ..> AppContext : uses
+AuthPage ..> AppContext : uses
+ProfilePage ..> AppContext : uses
+Header ..> AppContext : uses
+BookCard ..> AppContext : uses
+
+AppContext ..> BooksRouter : HTTP
+AppContext ..> CartRouter : HTTP
+AppContext ..> OrdersRouter : HTTP
+AppContext ..> ReadingListRouter : HTTP
+AppContext ..> OffersRouter : HTTP
+CatalogPage ..> GeminiAI : "AI search"
+
+BooksRouter ..> DatabasePool
+CartRouter ..> DatabasePool
+OrdersRouter ..> DatabasePool
+ReadingListRouter ..> DatabasePool
+OffersRouter ..> DatabasePool
+
+DatabasePool ..> PostgreSQL : SQL
+FirebaseAuth ..> User : authenticates
+
+@enduml
