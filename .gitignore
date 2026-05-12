@@ -21,6 +21,8 @@ Thumbs.db
 .vscode/
 .idea/
 
+Book-Store/
+
 server/serviceAccountKey.json
 server/*adminsdk*.json
 server/**/serviceAccount*.json
